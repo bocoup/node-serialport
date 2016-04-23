@@ -2,6 +2,7 @@
 
 var assert = require('chai').assert;
 var SerialPortBinding = require('../lib/bindings');
+var assign = require('object.assign').getPolyfill();
 
 var platform;
 switch (process.platform) {
@@ -14,8 +15,6 @@ switch (process.platform) {
   default:
     platform = 'unix';
 }
-
-console.log('Testing on ' + platform);
 
 var defaultPortOpenOptions = {
   baudRate: 9600,
@@ -55,6 +54,23 @@ describe('SerialPortBinding', function () {
 
     it('returns a file descriptor', function(done) {
       SerialPortBinding.open(testPort, defaultPortOpenOptions, function(err, fd) {
+        assert.isNull(err);
+        assert.isNumber(fd);
+        SerialPortBinding.close(fd, done);
+      });
+    });
+
+    it('supports a custom baudRate of 25000', function(done) {
+      var customRates = assign({}, defaultPortOpenOptions, {baudRate: 25000});
+      SerialPortBinding.open(testPort, customRates, function(err, fd) {
+        assert.isNull(err);
+        assert.isNumber(fd);
+        SerialPortBinding.close(fd, done);
+      });
+    });
+    it('supports a custom baudRate of 250000', function(done) {
+      var customRates = assign({}, defaultPortOpenOptions, {baudRate: 250000});
+      SerialPortBinding.open(testPort, customRates, function(err, fd) {
         assert.isNull(err);
         assert.isNumber(fd);
         SerialPortBinding.close(fd, done);
@@ -109,6 +125,59 @@ describe('SerialPortBinding', function () {
           assert.notEqual(obj[key], '', 'empty values should be undefined');
           assert.isNotNull(obj[key], 'empty values should be undefined');
         });
+        done();
+      });
+    });
+  });
+
+  describe('#update', function() {
+    if (platform === 'win32') {
+      it('on windows it returns an error', function(done) {
+        SerialPortBinding.update(99, defaultPortOpenOptions, function(err, data) {
+          assert.instanceOf(err, Error);
+          assert.isUndefined(data);
+          done();
+        });
+      });
+      return;
+    }
+
+    it('errors when updating nothing', function(done) {
+      try {
+        SerialPortBinding.update(99, {}, function() {});
+      } catch (err) {
+        assert.instanceOf(err, Error);
+        done();
+      }
+    });
+
+    if (!testPort) {
+      it('Cannot be tested further. Set the TEST_PORT env var with an available serialport for more testing.');
+      return;
+    }
+
+    beforeEach(function(done) {
+      SerialPortBinding.open(testPort, defaultPortOpenOptions, function(err, fd) {
+        assert.isNull(err);
+        assert.isNumber(fd);
+        this.fd = fd;
+        done();
+      }.bind(this));
+    });
+
+    afterEach(function(done) {
+      var fd = this.fd;
+      this.fd = null;
+      SerialPortBinding.close(fd, done);
+    });
+
+    it('updates baudRate', function(done) {
+      SerialPortBinding.update(this.fd, {baudRate: 57600}, done);
+    });
+
+    it('updates baudRate to a custom rate', function(done) {
+      SerialPortBinding.update(this.fd, {baudRate: 250000}, function(err) {
+        assert.isNull(err);
         done();
       });
     });

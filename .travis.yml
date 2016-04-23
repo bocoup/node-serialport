@@ -11,9 +11,6 @@ addons:
     - gcc-multilib
 
 # Build matrix
-os:
-- linux
-- osx
 env:
   global:
   - secure: nFQKlcfG1rV/kQm1EJtgQyRefZb6scdn/9epEaJgAyaqDRXHSZIFSuoOh4d/P5GC6V0yi6dA8I+XJsoRy29qG+JXWxN2enwjp16IbpUri9Z5H8uZPur1N6QPby9BX+PX5/4HU+KRgWtFDdfqqzbLmObXsxIUGtZtBbRY9otiUt8=
@@ -29,13 +26,19 @@ env:
   - TRAVIS_NODE_VERSION="6"
   - TRAVIS_NODE_VERSION="6" ARCH="x86"
 matrix:
-  allow_failures:
-  - os: linux
-    env: TRAVIS_NODE_VERSION="6"
-  - os: linux
-    env: TRAVIS_NODE_VERSION="6" ARCH="x86"
-  - os: osx
-    env: TRAVIS_NODE_VERSION="6"
+  include:
+    # Ubuntu 14.04.4 LTS (Trusty Tahr)
+    - os: linux
+      dist: trusty
+    # Xcode 7.3.1 OS X 10.11
+    - os: osx
+      osx_image: xcode7.3
+    # Xcode 7.1.1 GM  OS X 10.10
+    - os: osx
+      osx_image: xcode7.1
+    # Xcode 7.1.1 GM  OS X 10.9
+    - os: osx
+      osx_image: beta-xcode6.1
   exclude:
   - os: osx
     env: TRAVIS_NODE_VERSION="0.10" ARCH="x86"
@@ -47,6 +50,13 @@ matrix:
     env: TRAVIS_NODE_VERSION="5" ARCH="x86"
   - os: osx
     env: TRAVIS_NODE_VERSION="6" ARCH="x86"
+  allow_failures:
+  - os: linux
+    env: TRAVIS_NODE_VERSION="6"
+  - os: linux
+    env: TRAVIS_NODE_VERSION="6" ARCH="x86"
+  - os: osx
+    env: TRAVIS_NODE_VERSION="6"
 
 before_install:
 # reinstall latest nvm
